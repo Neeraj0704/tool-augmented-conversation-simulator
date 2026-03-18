@@ -23,7 +23,8 @@ git clone <repo-url>
 cd tool-augmented-conversation-simulator
 python3 -m venv venv
 source venv/bin/activate
-pip install -e .
+pip install -r requirements.txt   # exact pinned versions
+pip install -e .                  # installs the tacs CLI
 ```
 
 ### 2. Configure environment
