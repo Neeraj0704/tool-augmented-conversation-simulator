@@ -6,10 +6,30 @@ import pytest
 from tacs.memory.store import MemoryStore
 
 
+def _try_create_store() -> MemoryStore | None:
+    """Attempt to create a MemoryStore; return None if the backend is unavailable."""
+    try:
+        return MemoryStore()
+    except Exception:
+        return None
+
+
+_store_instance = _try_create_store()
+
+pytestmark = pytest.mark.skipif(
+    _store_instance is None,
+    reason=(
+        "MemoryStore could not be initialised — "
+        "ensure the configured LLM backend is running "
+        "(e.g. Ollama for TACS_LLM_BACKEND=ollama, or set OPENAI_API_KEY for openai)."
+    ),
+)
+
+
 @pytest.fixture(scope="module")
 def store() -> MemoryStore:
     """One MemoryStore instance shared across all tests in this module."""
-    return MemoryStore()
+    return _store_instance  # type: ignore[return-value]
 
 
 # ---------------------------------------------------------------------------
