@@ -26,30 +26,94 @@ class MemoryStore:
         # whose CollectionPersistence opens a SQLite connection with
         # check_same_thread=True (the macOS default for THREADSAFE=2), which
         # then raises when mem0's worker threads call back into Qdrant.
-        mem_config = {
-            "llm": {
-                "provider": "ollama",
-                "config": {
-                    "model": tacs_config.ollama_model,
-                    "ollama_base_url": tacs_config.ollama_base_url,
+        #
+        # Backend-aware config:
+        #   ollama    → Ollama LLM + Ollama embedder (nomic-embed-text, 768 dims)
+        #   openai    → OpenAI LLM + OpenAI embedder (text-embedding-3-small, 1536 dims)
+        #   anthropic → Anthropic LLM + OpenAI embedder (1536 dims)
+        #               Anthropic has no embedding API so OpenAI embeddings are used;
+        #               OPENAI_API_KEY must be set alongside ANTHROPIC_API_KEY.
+        backend = tacs_config.llm_backend
+
+        if backend == "openai":
+            mem_config = {
+                "llm": {
+                    "provider": "openai",
+                    "config": {
+                        "model": tacs_config.openai_model,
+                        "api_key": tacs_config.openai_api_key,
+                    },
                 },
-            },
-            "embedder": {
-                "provider": "ollama",
-                "config": {
-                    "model": tacs_config.ollama_embed_model,
-                    "ollama_base_url": tacs_config.ollama_base_url,
+                "embedder": {
+                    "provider": "openai",
+                    "config": {
+                        "model": "text-embedding-3-small",
+                        "api_key": tacs_config.openai_api_key,
+                    },
                 },
-            },
-            "vector_store": {
-                "provider": "qdrant",
-                "config": {
-                    "collection_name": "tacs_memory",
-                    "embedding_model_dims": tacs_config.ollama_embed_dims,
-                    "path": ":memory:",
+                "vector_store": {
+                    "provider": "qdrant",
+                    "config": {
+                        "collection_name": "tacs_memory",
+                        "embedding_model_dims": 1536,
+                        "path": ":memory:",
+                    },
                 },
-            },
-        }
+            }
+        elif backend == "anthropic":
+            # Anthropic provides no embedding model — use OpenAI embeddings.
+            # Requires OPENAI_API_KEY in addition to ANTHROPIC_API_KEY.
+            mem_config = {
+                "llm": {
+                    "provider": "anthropic",
+                    "config": {
+                        "model": tacs_config.anthropic_model,
+                        "api_key": tacs_config.anthropic_api_key,
+                    },
+                },
+                "embedder": {
+                    "provider": "openai",
+                    "config": {
+                        "model": "text-embedding-3-small",
+                        "api_key": tacs_config.openai_api_key,
+                    },
+                },
+                "vector_store": {
+                    "provider": "qdrant",
+                    "config": {
+                        "collection_name": "tacs_memory",
+                        "embedding_model_dims": 1536,
+                        "path": ":memory:",
+                    },
+                },
+            }
+        else:
+            # Default: ollama (nomic-embed-text → 768 dims)
+            mem_config = {
+                "llm": {
+                    "provider": "ollama",
+                    "config": {
+                        "model": tacs_config.ollama_model,
+                        "ollama_base_url": tacs_config.ollama_base_url,
+                    },
+                },
+                "embedder": {
+                    "provider": "ollama",
+                    "config": {
+                        "model": tacs_config.ollama_embed_model,
+                        "ollama_base_url": tacs_config.ollama_base_url,
+                    },
+                },
+                "vector_store": {
+                    "provider": "qdrant",
+                    "config": {
+                        "collection_name": "tacs_memory",
+                        "embedding_model_dims": tacs_config.ollama_embed_dims,
+                        "path": ":memory:",
+                    },
+                },
+            }
+
         self._memory = Memory.from_config(mem_config)
 
     def add(self, content: str, scope: str, metadata: dict) -> None:
