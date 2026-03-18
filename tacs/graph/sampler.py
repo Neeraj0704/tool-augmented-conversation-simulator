@@ -19,6 +19,15 @@ class ToolChain(BaseModel):
     pattern: str            # "multi_step", "parallel", "hybrid"
     tool_ids: list[str]     # distinct tool IDs in traversal order
 
+    @property
+    def flat_steps(self) -> list[str]:
+        """Flat list of all endpoint node IDs in execution order.
+
+        Parallel steps (multiple endpoints in one group) are flattened
+        left-to-right so callers always index with a single integer.
+        """
+        return [ep for group in self.steps for ep in group]
+
 
 class ToolChainSampler:
     """Samples realistic tool chains from a Tool Graph."""

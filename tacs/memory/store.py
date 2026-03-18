@@ -19,7 +19,31 @@ class MemoryStore:
 
     def __init__(self) -> None:
         from mem0 import Memory
-        self._memory = Memory()
+        from tacs.config import config as tacs_config
+
+        # Use path=":memory:" so QdrantClient runs in pure in-memory mode.
+        # The alternative (path=None / default) creates a file-based Qdrant
+        # whose CollectionPersistence opens a SQLite connection with
+        # check_same_thread=True (the macOS default for THREADSAFE=2), which
+        # then raises when mem0's worker threads call back into Qdrant.
+        mem_config = {
+            "embedder": {
+                "provider": "ollama",
+                "config": {
+                    "model": tacs_config.ollama_embed_model,
+                    "ollama_base_url": tacs_config.ollama_base_url,
+                },
+            },
+            "vector_store": {
+                "provider": "qdrant",
+                "config": {
+                    "collection_name": "tacs_memory",
+                    "embedding_model_dims": tacs_config.ollama_embed_dims,
+                    "path": ":memory:",
+                },
+            },
+        }
+        self._memory = Memory.from_config(mem_config)
 
     def add(self, content: str, scope: str, metadata: dict) -> None:
         """Store an entry under the given scope.

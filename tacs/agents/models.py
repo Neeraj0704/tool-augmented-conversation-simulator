@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict
 
+from tacs.graph.sampler import ToolChain
+
 
 class Message(BaseModel):
     """A single message in a conversation turn."""
@@ -57,3 +59,38 @@ class Conversation(BaseModel):
     tool_calls: list[ToolCall] = []
     tool_outputs: list[ToolOutput] = []
     metadata: ConversationMetadata
+
+
+class ConversationPlan(BaseModel):
+    """Plan produced by PlannerAgent for one conversation."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    scenario: str        # "User wants to book a flight to Tokyo"
+    domain: str          # "travel"
+    pattern_type: str    # "sequential multi-step"
+    tool_chain: ToolChain
+
+
+class AssistantAction(BaseModel):
+    """Action decided by AssistantAgent at each turn."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    action: Literal["clarify", "tool_call", "respond"]
+    message: Message
+    tool_call: ToolCall | None = None
+    grounded: bool = False  # True if session memory was used
+
+
+class ValidationResult(BaseModel):
+    """Result of ValidatorAgent checking a conversation."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    valid: bool
+    errors: list[str] = []
+    num_tool_calls: int = 0
+    num_distinct_tools: int = 0
+    has_clarification: bool = False
+    memory_grounding_rate: float | None = None
