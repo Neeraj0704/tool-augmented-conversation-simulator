@@ -162,12 +162,10 @@ class ToolGraphBuilder:
                 counts_by_type[nt] = counts_by_type.get(nt, 0) + 1
 
         logger.info(
-            "Graph built",
-            extra={
-                "total_nodes": total_nodes,
-                "total_edges": total_edges,
-                "compatible_edges": compatible_count,
-            },
+            "Graph built: %d nodes, %d edges, %d compatible_with edges",
+            total_nodes,
+            total_edges,
+            compatible_count,
         )
         for nt, count in sorted(counts_by_type.items(), key=lambda x: x[0].value):
             logger.info("  %s: %d", nt.value, count)

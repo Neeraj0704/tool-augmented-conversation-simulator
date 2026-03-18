@@ -75,11 +75,15 @@ class ToolRegistry:
 
     def save(self, artifacts_dir: Path) -> None:
         """Pickle the registry to artifacts_dir/registry.pkl."""
-        artifacts_dir.mkdir(parents=True, exist_ok=True)
-        out_path = artifacts_dir / _REGISTRY_FILE
-        with open(out_path, "wb") as f:
-            pickle.dump(self, f)
-        logger.info("Saved registry (%d tools) to %s", self.tool_count, out_path)
+        try:
+            artifacts_dir.mkdir(parents=True, exist_ok=True)
+            out_path = artifacts_dir / _REGISTRY_FILE
+            with open(out_path, "wb") as f:
+                pickle.dump(self, f)
+            logger.info("Saved registry (%d tools) to %s", self.tool_count, out_path)
+        except OSError:
+            logger.exception("Failed to save registry to %s", artifacts_dir)
+            raise
 
     @classmethod
     def load(cls, artifacts_dir: Path) -> ToolRegistry:
@@ -89,10 +93,14 @@ class ToolRegistry:
             raise FileNotFoundError(
                 f"Registry artifact not found at {pkl_path}. Run `tacs build` first."
             )
-        with open(pkl_path, "rb") as f:
-            registry = pickle.load(f)
-        logger.info("Loaded registry (%d tools) from %s", registry.tool_count, pkl_path)
-        return registry
+        try:
+            with open(pkl_path, "rb") as f:
+                registry = pickle.load(f)
+            logger.info("Loaded registry (%d tools) from %s", registry.tool_count, pkl_path)
+            return registry
+        except (OSError, pickle.UnpicklingError, EOFError):
+            logger.exception("Failed to load registry from %s", pkl_path)
+            raise
 
     def __len__(self) -> int:
         return len(self._tools)
