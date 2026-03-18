@@ -14,6 +14,7 @@ class Config(BaseSettings):
 
     # LLM
     llm_backend: str = "ollama"
+    llm_max_tokens: int = 4096
     ollama_base_url: str = "http://localhost:11434"
     ollama_model: str = "llama3"
     openai_api_key: str = ""
@@ -26,6 +27,8 @@ class Config(BaseSettings):
     conversation_count: int = 50
     min_tool_calls: int = 3
     min_distinct_tools: int = 2
+    max_turns: int = 10
+    max_retries: int = 50
 
     # Paths
     data_dir: Path = Path("data")

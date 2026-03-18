@@ -9,7 +9,14 @@ logger = logging.getLogger(__name__)
 
 
 class LLMClient:
-    """Unified LLM interface supporting ollama, openai, and anthropic backends."""
+    """Unified LLM interface supporting ollama, openai, and anthropic backends.
+
+    Wraps three backends behind a single `complete()` method so the rest of
+    the codebase never imports ollama, openai, or anthropic directly.
+
+    Does NOT handle retries, streaming, token counting, or prompt templating —
+    those are the caller's responsibility.
+    """
 
     def __init__(self, backend: str | None = None) -> None:
         self.backend = backend or config.llm_backend
@@ -55,7 +62,7 @@ class LLMClient:
             non_system = [m for m in messages if m["role"] != "system"]
             response = self._client.messages.create(
                 model=config.anthropic_model,
-                max_tokens=kwargs.pop("max_tokens", 4096),
+                max_tokens=kwargs.pop("max_tokens", config.llm_max_tokens),
                 system=system,
                 messages=non_system,
                 **kwargs,

@@ -17,6 +17,7 @@ dependencies = [
     "ollama>=0.2",
     "python-dotenv>=1.0",
     "faker>=24.0",
+    "tqdm>=4.0",
 ]
 
 [project.scripts]
