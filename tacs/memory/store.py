@@ -27,6 +27,13 @@ class MemoryStore:
         # check_same_thread=True (the macOS default for THREADSAFE=2), which
         # then raises when mem0's worker threads call back into Qdrant.
         mem_config = {
+            "llm": {
+                "provider": "ollama",
+                "config": {
+                    "model": tacs_config.ollama_model,
+                    "ollama_base_url": tacs_config.ollama_base_url,
+                },
+            },
             "embedder": {
                 "provider": "ollama",
                 "config": {
