@@ -34,7 +34,7 @@ def cli() -> None:
 @cli.command()
 @click.option(
     "--data-dir",
-    type=click.Path(exists=True, file_okay=False, path_type=Path),
+    type=click.Path(file_okay=False, path_type=Path),
     default=lambda: config.data_dir,
     show_default=True,
     help="Directory containing ToolBench raw data.",
@@ -52,6 +52,7 @@ def build(data_dir: Path, output_dir: Path) -> None:
     from tacs.registry.loader import load_tools
     from tacs.registry.registry import ToolRegistry
 
+    output_dir.mkdir(parents=True, exist_ok=True)
     click.echo(f"Loading tools from {data_dir} …")
     tools = load_tools(data_dir)
     if not tools:

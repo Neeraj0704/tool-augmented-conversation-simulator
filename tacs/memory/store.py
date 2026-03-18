@@ -21,6 +21,14 @@ class MemoryStore:
         from mem0 import Memory
         from tacs.config import config as tacs_config
 
+        backend = tacs_config.llm_backend
+        if backend == "anthropic" and not tacs_config.openai_api_key:
+            raise ValueError(
+                "TACS_LLM_BACKEND=anthropic requires OPENAI_API_KEY to be set "
+                "because Anthropic has no embedding API — OpenAI embeddings are "
+                "used for the memory store. Please add OPENAI_API_KEY to your .env."
+            )
+
         # Use path=":memory:" so QdrantClient runs in pure in-memory mode.
         # The alternative (path=None / default) creates a file-based Qdrant
         # whose CollectionPersistence opens a SQLite connection with
@@ -33,7 +41,6 @@ class MemoryStore:
         #   anthropic → Anthropic LLM + OpenAI embedder (1536 dims)
         #               Anthropic has no embedding API so OpenAI embeddings are used;
         #               OPENAI_API_KEY must be set alongside ANTHROPIC_API_KEY.
-        backend = tacs_config.llm_backend
 
         if backend == "openai":
             mem_config = {
